@@ -1,0 +1,7 @@
+---
+- name: install req packages
+  hosts: web_server
+  become: yes 
+
+  roles:
+    - /install-packages

@@ -1,0 +1,39 @@
+# goapp deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goapp-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: goapp
+  template:
+    metadata:
+      labels:
+        app: goapp
+    spec:
+      containers:
+      - name: goapp
+        image: kubesami/backend:ffe956a23685d8b273aa8ea9d6c38d8546d37a8b
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://root:password@db-service:5432/go-chat?sslmode=disable"
+        - name: FRONTEND_URL
+          value: "http://devopschat.xyz"
+---
+# goapp service
+apiVersion: v1
+kind: Service
+metadata:
+  name: goapp-service
+spec:
+  selector:
+    app: goapp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080

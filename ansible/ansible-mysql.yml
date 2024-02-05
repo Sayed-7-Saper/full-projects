@@ -1,0 +1,43 @@
+---
+- name: Manage MySQL Database
+  hosts: web_server
+  become: yes
+
+  vars_files:
+    - secrets.yml
+
+  tasks:
+    - name: Install MySQL Python package
+      apt: 
+        name: python3-mysqldb
+        state: present
+      become: yes
+
+    - name: Ensure MySQL service is running
+      service:
+        name: mysql
+        state: started
+      become: yes
+
+    - name: Create MySQL database
+      mysql_db:
+        name: "{{ mysql_database }}"
+        state: present
+      become: yes
+      notify:
+        - Restart MySQL
+
+    - name: Create MySQL user
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_database }}.*:ALL"
+        state: present
+      become: yes
+      
+  hander:
+  - name: Restart MySQL
+    service:
+      name: mysql
+      state: restarted
+    become: yes

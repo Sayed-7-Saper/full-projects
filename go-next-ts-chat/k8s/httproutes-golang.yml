@@ -1,0 +1,14 @@
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1beta1
+metadata:
+  name: chat-goapp
+spec:
+  parentRefs:
+  - kind: Gateway
+    name: external-http
+  hostnames:
+  - "api.devopschat.xyz"
+  rules:
+  - backendRefs:
+    - name: goapp-service
+      port: 8080

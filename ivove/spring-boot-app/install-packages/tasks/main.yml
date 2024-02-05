@@ -1,0 +1,121 @@
+---
+- name: Install Git
+  apt:
+    name: git
+    state: present
+  become: true
+
+- name: Install Java
+  apt:
+    name: openjdk-11-jdk
+    state: present
+  become: true
+
+
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    become: true
+     
+
+- name: Install required packages
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg2
+    - software-properties-common
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-ce
+    - docker-ce-cli
+    - docker-compose
+    - docker-compose-plugin
+    # this module is required to run `docker` command through Ansible.
+    - python3-docker
+
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+    become: true
+
+- name: Add Docker APT repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+    become: true
+
+- name: Update apt packages
+  apt:
+    update_cache: yes
+    become: true
+      
+
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+  become: true
+  notify:
+    - Start Docker Service
+  tags:
+    - docker  
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  become: true
+
+
+- name: Add user to sudoers
+  lineinfile:
+    dest: /etc/sudoers
+    line: "{{ ansible_ssh_user }} ALL=(ALL) NOPASSWD: ALL"
+    validate: 'visudo -cf %s'
+  become: true
+
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: present
+  become: true
+  notify:
+    - Start Jenkins Service
+  tags:
+    - jenkins
+
+- name: Install SonarQube
+  block:
+    - name: Install SonarQube
+      apt:
+        name: sonarqube
+        state: present
+  become: true
+  
+- name: Add SonarQube GPG key
+  apt_key:
+    url: https://binaries.sonarsource.com/SonarSource/sonarqube-org/community%3A7.9%3A%3Agpg.key
+    state: present
+
+- name: Add SonarQube APT repository
+  apt_repository:
+    repo: 'deb https://binaries.sonarsource.com/SonarSource/sonarqube-org/community%3A7.9%3A%3A/debian buster main'
+    state: present
+
+- name: Install SonarQube
+  apt:
+    name: sonarqube
+    state: present
+
+- name: Start SonarQube service
+  systemd:
+    name: sonarqube
+    state: started
+    enabled: yes

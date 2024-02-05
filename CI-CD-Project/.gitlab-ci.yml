@@ -1,0 +1,33 @@
+
+
+#image: node:16-alpine3.16    
+
+# CI 
+stages:
+  - build
+  - test
+  - deploy
+
+
+.template_docker_login:
+  image: docker:24.1.2
+  services:
+    - docker:24.1.2-dind  
+
+
+build-image:
+  stage: build
+  extends: .template_docker_login
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - docker build -t my-node-app-test .
+    - docker tag my-node-app-test:latest 10103040/test-nodejs:latest
+    - docker push 10103040/test-nodejs:latest
+    - docker logout
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      exists:
+        - Dockerfile
+
+
